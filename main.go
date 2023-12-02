@@ -5,13 +5,14 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
+func excuteTemplate(w http.ResponseWriter, filePath string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tpl, err := template.ParseFiles("templates/home.gohtml")
+	tpl, err := template.ParseFiles(filepath.Join("templates/", filePath+".gohtml"))
 	if err != nil {
 		log.Printf("Error parsing %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -24,12 +25,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
 
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	excuteTemplate(w, "home")
 }
 
 func contactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, `<h1>Contact Page</h1>
-	<a href="mailto:mohieey@gmail.com">mohieey@gmail.com</a>`)
+	excuteTemplate(w, "contact")
+
 }
 
 var port = ":3000"
