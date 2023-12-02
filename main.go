@@ -1,17 +1,30 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tpl, err := template.ParseFiles("templates/home.gohtml")
+	if err != nil {
+		log.Printf("Error parsing %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	data, _ := json.Marshal("sss")
-	w.Write(data)
+	err = tpl.Execute(w, nil)
+	if err != nil {
+		log.Printf("Error excuting %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func contactHandler(w http.ResponseWriter, r *http.Request) {
