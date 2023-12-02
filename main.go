@@ -36,12 +36,18 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func faqHandler(w http.ResponseWriter, r *http.Request) {
+	excuteTemplate(w, "faq")
+
+}
+
 var port = ":3000"
 
 func main() {
 	r := chi.NewRouter()
 	r.Get("/", homeHandler)
 	r.Get("/contact", contactHandler)
+	r.Get("/faq", faqHandler)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
