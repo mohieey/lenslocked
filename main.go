@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mohieey/lenslocked/controllers"
+	"github.com/mohieey/lenslocked/templates"
 	"github.com/mohieey/lenslocked/views"
 )
 
@@ -14,13 +15,13 @@ var port = ":3000"
 func main() {
 	r := chi.NewRouter()
 
-	tmpl := views.Must(views.Parse("home"))
+	tmpl := views.Must(views.ParseFS(templates.FS, "home.gohtml"))
 	r.Get("/", controllers.StaticHandler(tmpl))
 
-	tmpl = views.Must(views.Parse("contact"))
+	tmpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml"))
 	r.Get("/contact", controllers.StaticHandler(tmpl))
 
-	tmpl = views.Must(views.Parse("faq"))
+	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml"))
 	r.Get("/faq", controllers.StaticHandler(tmpl))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

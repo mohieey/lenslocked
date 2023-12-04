@@ -3,10 +3,20 @@ package views
 import (
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"path/filepath"
 )
+
+func ParseFS(fs fs.FS, patterns ...string) (*Template, error) {
+	tmpl, err := template.ParseFS(fs, patterns...)
+	if err != nil {
+		return &Template{}, fmt.Errorf("Error parsing %w", err)
+	}
+
+	return &Template{htmlTemplate: tmpl}, nil
+}
 
 func Parse(filePath string) (*Template, error) {
 	tmpl, err := template.ParseFiles(filepath.Join("templates/", filePath+".gohtml"))
