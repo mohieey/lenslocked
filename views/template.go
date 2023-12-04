@@ -9,12 +9,19 @@ import (
 )
 
 func Parse(filePath string) (*Template, error) {
-	tpl, err := template.ParseFiles(filepath.Join("templates/", filePath+".gohtml"))
+	tmpl, err := template.ParseFiles(filepath.Join("templates/", filePath+".gohtml"))
 	if err != nil {
 		return &Template{}, fmt.Errorf("Error parsing %w", err)
 	}
 
-	return &Template{htmlTemplate: tpl}, nil
+	return &Template{htmlTemplate: tmpl}, nil
+}
+
+func Must(tmpl *Template, err error) *Template {
+	if err != nil {
+		panic(err)
+	}
+	return tmpl
 }
 
 type Template struct {

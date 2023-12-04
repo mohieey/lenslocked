@@ -14,22 +14,13 @@ var port = ":3000"
 func main() {
 	r := chi.NewRouter()
 
-	tmpl, err := views.Parse("home")
-	if err != nil {
-		panic(err)
-	}
+	tmpl := views.Must(views.Parse("home"))
 	r.Get("/", controllers.StaticHandler(tmpl))
 
-	tmpl, err = views.Parse("contact")
-	if err != nil {
-		panic(err)
-	}
+	tmpl = views.Must(views.Parse("contact"))
 	r.Get("/contact", controllers.StaticHandler(tmpl))
 
-	tmpl, err = views.Parse("faq")
-	if err != nil {
-		panic(err)
-	}
+	tmpl = views.Must(views.Parse("faq"))
 	r.Get("/faq", controllers.StaticHandler(tmpl))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
