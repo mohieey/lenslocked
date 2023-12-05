@@ -15,13 +15,13 @@ var port = ":3000"
 func main() {
 	r := chi.NewRouter()
 
-	tmpl := views.Must(views.ParseFS(templates.FS, "home.gohtml"))
+	tmpl := views.Must(views.ParseFS(templates.FS, "home.gohtml", "layout_parts.gohtml"))
 	r.Get("/", controllers.StaticHandler(tmpl))
 
-	tmpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml"))
+	tmpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml", "layout_parts.gohtml"))
 	r.Get("/contact", controllers.StaticHandler(tmpl))
 
-	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml"))
+	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "layout_parts.gohtml"))
 	r.Get("/faq", controllers.FAQ(tmpl))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
