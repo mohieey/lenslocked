@@ -24,6 +24,9 @@ func main() {
 	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
 	r.Get("/faq", controllers.FAQ(tmpl))
 
+	usersController := controllers.Users{}
+	r.Post("/users", usersController.SignUp)
+
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
