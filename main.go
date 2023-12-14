@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mohieey/lenslocked/controllers"
+	"github.com/mohieey/lenslocked/models"
 	"github.com/mohieey/lenslocked/templates"
 	"github.com/mohieey/lenslocked/views"
 )
@@ -24,8 +25,21 @@ func main() {
 	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
 	r.Get("/faq", controllers.FAQ(tmpl))
 
-	usersController := controllers.Users{}
-	r.Post("/users", usersController.SignUp)
+	cfg := models.DefaultPostgresConfig()
+	db, err := models.Open(cfg)
+	if err != nil {
+		panic(err)
+	}
+	if err = db.Ping(); err != nil {
+		panic(err)
+	}
+	fmt.Println("connected to the database successfully")
+	defer db.Close()
+
+	userService := models.UserService{DB: db}
+
+	usersController := controllers.Users{UserService: &userService}
+	r.Post("/signup", usersController.SignUp)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
