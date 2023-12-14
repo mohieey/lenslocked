@@ -40,6 +40,7 @@ func main() {
 
 	usersController := controllers.Users{UserService: &userService}
 	r.Post("/signup", usersController.SignUp)
+	r.Post("/signin", usersController.SignIn)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
