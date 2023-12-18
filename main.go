@@ -45,6 +45,7 @@ func main() {
 	}
 	r.Post("/signup", usersController.SignUp)
 	r.Post("/signin", usersController.SignIn)
+	r.Delete("/signout", usersController.SignOut)
 	r.Get("/users/me", usersController.CurrentUser)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

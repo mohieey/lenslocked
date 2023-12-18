@@ -92,3 +92,23 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
+
+func (u Users) SignOut(w http.ResponseWriter, r *http.Request) {
+	tokenCookie, err := r.Cookie("session")
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	err = u.SessionService.Delete(tokenCookie.Value)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	deleCookie(w, CookieSession)
+
+	w.Write([]byte("sucessfully signed out"))
+}
