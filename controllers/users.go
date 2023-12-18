@@ -12,7 +12,8 @@ type Users struct {
 	Templates struct {
 		SignUp Template
 	}
-	UserService *models.UserService
+	UserService    *models.UserService
+	SessionService *models.SessionService
 }
 
 func (u Users) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,15 @@ func (u Users) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session, err := u.SessionService.Create(int(user.ID))
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, newCookie(CookieSession, session.Token))
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
@@ -45,6 +55,34 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	user, err := u.UserService.Authenticate(email, password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	session, err := u.SessionService.Create(int(user.ID))
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, newCookie(CookieSession, session.Token))
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
+	tokenCookie, err := r.Cookie("session")
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	user, err := u.SessionService.User(tokenCookie.Value)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)

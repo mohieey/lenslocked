@@ -37,14 +37,23 @@ func main() {
 	defer db.Close()
 
 	userService := models.UserService{DB: db}
+	sessionService := models.SessionService{DB: db, BytesPerToken: 32}
 
-	usersController := controllers.Users{UserService: &userService}
+	usersController := controllers.Users{
+		UserService:    &userService,
+		SessionService: &sessionService,
+	}
 	r.Post("/signup", usersController.SignUp)
 	r.Post("/signin", usersController.SignIn)
+	r.Get("/users/me", usersController.CurrentUser)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
 	fmt.Println("Serving on ", port)
+
+	// csrfKey := "fivhenqpamrhdfgxtymopqfhmzxcarnd"
+	// csrfMw := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+	// http.ListenAndServe(port, csrfMw(r))
 	http.ListenAndServe(port, r)
 }

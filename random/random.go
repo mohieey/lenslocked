@@ -1,12 +1,10 @@
-package rand
+package random
 
 import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 )
-
-const SessionTokenBytes = 31
 
 func Bytes(n int) ([]byte, error) {
 	bytes := make([]byte, n)
@@ -31,6 +29,7 @@ func String(n int) (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-func SessionToken() (string, error) {
-	return String(SessionTokenBytes)
+func SessionToken(bytesPerToken int) (string, error) {
+	fmt.Println(bytesPerToken)
+	return String(bytesPerToken)
 }
