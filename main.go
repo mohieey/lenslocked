@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mohieey/lenslocked/controllers"
+	"github.com/mohieey/lenslocked/migrations"
 	"github.com/mohieey/lenslocked/models"
 	"github.com/mohieey/lenslocked/templates"
 	"github.com/mohieey/lenslocked/views"
@@ -35,6 +36,11 @@ func main() {
 	}
 	fmt.Println("connected to the database successfully")
 	defer db.Close()
+
+	err = models.MigrateFS(db, ".", migrations.FS)
+	if err != nil {
+		panic(err)
+	}
 
 	userService := models.UserService{DB: db}
 	sessionService := models.SessionService{DB: db, BytesPerToken: 32}

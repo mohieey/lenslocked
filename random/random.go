@@ -30,6 +30,5 @@ func String(n int) (string, error) {
 }
 
 func SessionToken(bytesPerToken int) (string, error) {
-	fmt.Println(bytesPerToken)
 	return String(bytesPerToken)
 }
