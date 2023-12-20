@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/mohieey/lenslocked/appctx"
 	"github.com/mohieey/lenslocked/models"
 )
 
@@ -75,17 +76,9 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := r.Cookie("session")
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "something went wrong", http.StatusInternalServerError)
-		return
-	}
-
-	user, err := u.SessionService.User(tokenCookie.Value)
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "something went wrong", http.StatusInternalServerError)
+	user := appctx.User(r.Context())
+	if user == nil {
+		http.Error(w, "not authorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -94,7 +87,7 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u Users) SignOut(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := r.Cookie("session")
+	tokenCookie, err := r.Cookie(CookieSession)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)

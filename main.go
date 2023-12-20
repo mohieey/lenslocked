@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mohieey/lenslocked/controllers"
+	"github.com/mohieey/lenslocked/middlewares"
 	"github.com/mohieey/lenslocked/migrations"
 	"github.com/mohieey/lenslocked/models"
 	"github.com/mohieey/lenslocked/templates"
@@ -57,10 +58,13 @@ func main() {
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
-	fmt.Println("Serving on ", port)
 
+	umw := middlewares.UserMiddleware{
+		SessionService: &sessionService,
+	}
 	// csrfKey := "fivhenqpamrhdfgxtymopqfhmzxcarnd"
 	// csrfMw := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
 	// http.ListenAndServe(port, csrfMw(r))
-	http.ListenAndServe(port, r)
+	fmt.Println("Serving on ", port)
+	http.ListenAndServe(port, umw.SetUser(r))
 }
