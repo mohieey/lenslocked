@@ -12,7 +12,7 @@ type UserMiddleware struct {
 	SessionService *models.SessionService
 }
 
-func (usm *UserMiddleware) SetUser(next http.Handler) http.Handler {
+func (umw *UserMiddleware) SetUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenCookie, err := r.Cookie(controllers.CookieSession)
 		if err != nil {
@@ -20,7 +20,7 @@ func (usm *UserMiddleware) SetUser(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := usm.SessionService.User(tokenCookie.Value)
+		user, err := umw.SessionService.User(tokenCookie.Value)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
@@ -29,5 +29,17 @@ func (usm *UserMiddleware) SetUser(next http.Handler) http.Handler {
 		ctx := r.Context()
 		ctx = appctx.WithUser(ctx, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (umw *UserMiddleware) RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := appctx.User(r.Context())
+		if user == nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

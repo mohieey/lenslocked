@@ -77,10 +77,6 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	user := appctx.User(r.Context())
-	if user == nil {
-		http.Error(w, "not authorized", http.StatusUnauthorized)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)

@@ -9,24 +9,12 @@ import (
 	"github.com/mohieey/lenslocked/middlewares"
 	"github.com/mohieey/lenslocked/migrations"
 	"github.com/mohieey/lenslocked/models"
-	"github.com/mohieey/lenslocked/templates"
-	"github.com/mohieey/lenslocked/views"
 )
 
 var port = ":3000"
 
 func main() {
-	r := chi.NewRouter()
-
-	tmpl := views.Must(views.ParseFS(templates.FS, "home.gohtml", "tailwind.gohtml"))
-	r.Get("/", controllers.StaticHandler(tmpl))
-
-	tmpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml", "tailwind.gohtml"))
-	r.Get("/contact", controllers.StaticHandler(tmpl))
-
-	tmpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
-	r.Get("/faq", controllers.FAQ(tmpl))
-
+	// Setup the database
 	cfg := models.DefaultPostgresConfig()
 	db, err := models.Open(cfg)
 	if err != nil {
@@ -43,28 +31,42 @@ func main() {
 		panic(err)
 	}
 
+	// Setup services
 	userService := models.UserService{DB: db}
 	sessionService := models.SessionService{DB: db, BytesPerToken: 32}
 
+	// Setup middlewares
+	umw := middlewares.UserMiddleware{
+		SessionService: &sessionService,
+	}
+
+	// csrfKey := "fivhenqpamrhdfgxtymopqfhmzxcarnd"
+	// csrfMw := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+
+	// Setup controllers
 	usersController := controllers.Users{
 		UserService:    &userService,
 		SessionService: &sessionService,
 	}
+
+	// Setup routes
+	r := chi.NewRouter()
+	r.Use(umw.SetUser)
+
 	r.Post("/signup", usersController.SignUp)
 	r.Post("/signin", usersController.SignIn)
 	r.Delete("/signout", usersController.SignOut)
-	r.Get("/users/me", usersController.CurrentUser)
+	r.Route("/users/me", func(r chi.Router) {
+		r.Use(umw.RequireUser)
+		r.Get("/", usersController.CurrentUser)
+	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
 
-	umw := middlewares.UserMiddleware{
-		SessionService: &sessionService,
-	}
-	// csrfKey := "fivhenqpamrhdfgxtymopqfhmzxcarnd"
-	// csrfMw := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
-	// http.ListenAndServe(port, csrfMw(r))
+	//Start the server
+
 	fmt.Println("Serving on ", port)
-	http.ListenAndServe(port, umw.SetUser(r))
+	http.ListenAndServe(port, r)
 }
