@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultResetDuration = 1 * time.Hour
+	MinResetDuration = 10 * time.Minute
 )
 
 type PasswordReset struct {

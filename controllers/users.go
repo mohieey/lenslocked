@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/mohieey/lenslocked/appctx"
 	"github.com/mohieey/lenslocked/services"
@@ -119,7 +120,7 @@ func (u *Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		"token": []string{pwReset.Token},
 	}
 
-	resetUrl := fmt.Sprintf("www.localhost.com:3000/reset_password?%v", vals.Encode())
+	resetUrl := fmt.Sprintf("%v:%v/reset_password?%v", os.Getenv("HOST"), os.Getenv("PORT"), vals.Encode())
 
 	err = u.EmailService.ForgotPassword(email, resetUrl)
 	if err != nil {
@@ -133,10 +134,22 @@ func (u *Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 func (u *Users) ResetPassord(w http.ResponseWriter, r *http.Request) {
 	token := r.FormValue("token")
-	// password := r.FormValue("password")
-	// confirmPassword := r.FormValue("confirmPassword")
+	password := r.FormValue("password")
+	confirmPassword := r.FormValue("confirmPassword")
+
+	if password != confirmPassword {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 
 	user, err := u.PasswordResetService.Consume(token)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = u.UserService.UpdatePassword(int(user.ID), password)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
