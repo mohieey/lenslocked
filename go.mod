@@ -4,10 +4,11 @@ go 1.21.4
 
 require (
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/jackc/pgx/v4 v4.18.1
+	github.com/lpernett/godotenv v0.0.0-20230527005122-0de1d4c5ef5e
 	github.com/pressly/goose/v3 v3.17.0
 	golang.org/x/crypto v0.16.0
+	gopkg.in/mail.v2 v2.3.1
 )
 
 require (
@@ -24,5 +25,4 @@ require (
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/mail.v2 v2.3.1 // indirect
 )

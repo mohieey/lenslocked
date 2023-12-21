@@ -5,11 +5,11 @@ import (
 
 	"github.com/mohieey/lenslocked/appctx"
 	"github.com/mohieey/lenslocked/controllers"
-	"github.com/mohieey/lenslocked/models"
+	"github.com/mohieey/lenslocked/services"
 )
 
 type UserMiddleware struct {
-	SessionService *models.SessionService
+	SessionService *services.SessionService
 }
 
 func (umw *UserMiddleware) SetUser(next http.Handler) http.Handler {
