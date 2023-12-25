@@ -88,6 +88,9 @@ func main() {
 		BytesPerToken: 32,
 	}
 	emailService := services.NewEmailService(cfg.SMTP)
+	galleryService := services.GalleryService{
+		DB: db,
+	}
 
 	// Setup middlewares
 	umw := middlewares.UserMiddleware{
@@ -105,6 +108,10 @@ func main() {
 		EmailService:         emailService,
 	}
 
+	galleriesController := controllers.Galleries{
+		GalleryService: &galleryService,
+	}
+
 	// Setup routes
 	r := chi.NewRouter()
 	r.Use(umw.SetUser)
@@ -117,6 +124,18 @@ func main() {
 	r.Route("/users/me", func(r chi.Router) {
 		r.Use(umw.RequireUser)
 		r.Get("/", usersController.CurrentUser)
+	})
+
+	r.Route("/galleries", func(r chi.Router) {
+		r.Get("/{id}", galleriesController.Show)
+		r.Group(func(r chi.Router) {
+			r.Use(umw.RequireUser)
+			r.Get("/", galleriesController.Index)
+			r.Post("/", galleriesController.Create)
+			r.Put("/{id}", galleriesController.Update)
+			r.Delete("/{id}", galleriesController.Delete)
+		})
+
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
