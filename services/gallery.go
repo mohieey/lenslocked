@@ -3,12 +3,18 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/mohieey/lenslocked/models"
 )
 
+const DefaultImagesDir = "images"
+
 type GalleryService struct {
-	DB *sql.DB
+	DB                  *sql.DB
+	ImagesDir           string
+	SupportedExtensions []string
 }
 
 func (gs *GalleryService) Create(title string, userID int) (*models.Gallery, error) {
@@ -116,4 +122,45 @@ func (gs *GalleryService) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (gs *GalleryService) galleryDir(id int) string {
+	if gs.ImagesDir == "" {
+		gs.ImagesDir = DefaultImagesDir
+	}
+	return filepath.Join(gs.ImagesDir, fmt.Sprintf("gallery-%d", id))
+}
+
+func (gs *GalleryService) hasExtension(imagePath string, extensions []string) bool {
+	imagePath = strings.ToLower(imagePath)
+	for _, extension := range extensions {
+		extension = strings.ToLower(extension)
+		if filepath.Ext(imagePath) == extension {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (gs *GalleryService) Images(galleryID int) ([]models.Image, error) {
+	globPattern := filepath.Join(gs.galleryDir(galleryID), "*")
+	allFiles, err := filepath.Glob(globPattern)
+	if err != nil {
+		return nil, fmt.Errorf("error getting images: %w", err)
+	}
+
+	images := []models.Image{}
+
+	for _, file := range allFiles {
+		if gs.hasExtension(file, gs.SupportedExtensions) {
+			images = append(images, models.Image{
+				GalleryID: galleryID,
+				Path:      file,
+				FileName:  filepath.Base(file),
+			})
+		}
+	}
+
+	return images, nil
 }
