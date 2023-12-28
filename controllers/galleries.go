@@ -97,6 +97,7 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isGalleryOwner(w, r, gallery) {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
@@ -107,11 +108,10 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("gallery deleted successfully"))
 }
 
-func (g *Galleries) Image(w http.ResponseWriter, r *http.Request) {
+func (g *Galleries) ServeImage(w http.ResponseWriter, r *http.Request) {
 	filename := chi.URLParam(r, "filename")
 	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -132,6 +132,28 @@ func (g *Galleries) Image(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, image.Path)
+}
+
+func (g *Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	filename := chi.URLParam(r, "filename")
+	gallery, err := g.getGalleryById(w, r)
+	if err != nil {
+		return
+	}
+
+	if !isGalleryOwner(w, r, gallery) {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	err = g.GalleryService.DeleteImage(gallery.ID, filename)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("image deleted successfully"))
 }
 
 func (g *Galleries) getGalleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {

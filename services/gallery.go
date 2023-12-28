@@ -182,3 +182,17 @@ func (gs *GalleryService) Image(galleryID int, imageName string) (*models.Image,
 		FileName:  imageName,
 	}, nil
 }
+
+func (gs *GalleryService) DeleteImage(galleryID int, imageName string) error {
+	image, err := gs.Image(galleryID, imageName)
+	if err != nil {
+		return fmt.Errorf("error deleting image: %w", err)
+	}
+
+	err = os.Remove(image.Path)
+	if err != nil {
+		return fmt.Errorf("error removing image: %w", err)
+	}
+
+	return nil
+}
