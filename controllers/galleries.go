@@ -3,8 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -24,7 +24,7 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 
 	gallery, err := g.GalleryService.Create(title, int(user.ID))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -50,7 +50,7 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 
 	err = g.GalleryService.Update(gallery)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -64,7 +64,7 @@ func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
 
 	galleries, err := g.GalleryService.GetByUserId(int(user.ID))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -81,7 +81,7 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 
 	gallery.Images, err = g.GalleryService.Images(gallery.ID)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -97,13 +97,12 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isGalleryOwner(w, r, gallery) {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
 	err = g.GalleryService.Delete(gallery.ID)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -115,14 +114,14 @@ func (g *Galleries) ServeImage(w http.ResponseWriter, r *http.Request) {
 	filename := chi.URLParam(r, "filename")
 	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
 	image, err := g.GalleryService.Image(galleryID, filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		if errors.Is(err, fs.ErrNotExist) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
@@ -137,14 +136,12 @@ func (g *Galleries) ServeImage(w http.ResponseWriter, r *http.Request) {
 func (g *Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
 	gallery, err := g.getGalleryById(w, r)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	err = r.ParseMultipartForm(5 << 20)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -154,7 +151,7 @@ func (g *Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
 	for _, imageHeader := range imagesHeaders {
 		image, err := imageHeader.Open()
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -162,7 +159,7 @@ func (g *Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
 
 		err = g.GalleryService.CreateImage(gallery.ID, imageHeader.Filename, image)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -181,13 +178,12 @@ func (g *Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isGalleryOwner(w, r, gallery) {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
 	err = g.GalleryService.DeleteImage(gallery.ID, filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -198,14 +194,14 @@ func (g *Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
 func (g *Galleries) getGalleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return nil, err
 	}
 
 	gallery, err := g.GalleryService.GetById(id)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return nil, err
 	}
@@ -217,6 +213,7 @@ func isGalleryOwner(w http.ResponseWriter, r *http.Request, gallery *models.Gall
 	user := appctx.User(r.Context())
 
 	if gallery.UserId != int(user.ID) {
+		log.Println(errors.New("unauthorized gallery access"))
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return false
 	}

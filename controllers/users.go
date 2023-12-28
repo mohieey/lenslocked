@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,14 +38,14 @@ func (u *Users) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	user, err := u.UserService.Create(email, password)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
 	session, err := u.SessionService.Create(int(user.ID))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -61,14 +62,14 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	user, err := u.UserService.Authenticate(email, password)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
 	session, err := u.SessionService.Create(int(user.ID))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -89,14 +90,14 @@ func (u *Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 func (u *Users) SignOut(w http.ResponseWriter, r *http.Request) {
 	tokenCookie, err := r.Cookie(CookieSession)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
 	err = u.SessionService.Delete(tokenCookie.Value)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -111,7 +112,7 @@ func (u *Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	pwReset, err := u.PasswordResetService.Create(email)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -124,7 +125,7 @@ func (u *Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	err = u.EmailService.ForgotPassword(email, resetUrl)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -144,21 +145,21 @@ func (u *Users) ResetPassord(w http.ResponseWriter, r *http.Request) {
 
 	user, err := u.PasswordResetService.Consume(token)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	err = u.UserService.UpdatePassword(int(user.ID), password)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	session, err := u.SessionService.Create(int(user.ID))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
