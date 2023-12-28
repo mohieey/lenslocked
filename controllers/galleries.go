@@ -139,6 +139,10 @@ func (g *Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isGalleryOwner(w, r, gallery) {
+		return
+	}
+
 	err = r.ParseMultipartForm(5 << 20)
 	if err != nil {
 		log.Println(err)
