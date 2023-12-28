@@ -2,7 +2,10 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -134,7 +137,6 @@ func (gs *GalleryService) galleryDir(id int) string {
 func (gs *GalleryService) hasExtension(imagePath string, extensions []string) bool {
 	imagePath = strings.ToLower(imagePath)
 	for _, extension := range extensions {
-		extension = strings.ToLower(extension)
 		if filepath.Ext(imagePath) == extension {
 			return true
 		}
@@ -145,22 +147,38 @@ func (gs *GalleryService) hasExtension(imagePath string, extensions []string) bo
 
 func (gs *GalleryService) Images(galleryID int) ([]models.Image, error) {
 	globPattern := filepath.Join(gs.galleryDir(galleryID), "*")
-	allFiles, err := filepath.Glob(globPattern)
+	imagesPaths, err := filepath.Glob(globPattern)
 	if err != nil {
 		return nil, fmt.Errorf("error getting images: %w", err)
 	}
 
 	images := []models.Image{}
-
-	for _, file := range allFiles {
-		if gs.hasExtension(file, gs.SupportedExtensions) {
+	for _, imagePath := range imagesPaths {
+		if gs.hasExtension(imagePath, gs.SupportedExtensions) {
 			images = append(images, models.Image{
 				GalleryID: galleryID,
-				Path:      file,
-				FileName:  filepath.Base(file),
+				Path:      imagePath,
+				FileName:  filepath.Base(imagePath),
 			})
 		}
 	}
 
 	return images, nil
+}
+
+func (gs *GalleryService) Image(galleryID int, imageName string) (*models.Image, error) {
+	imagePath := filepath.Join(gs.galleryDir(galleryID), imageName)
+	_, err := os.Stat(imagePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fs.ErrNotExist
+		}
+		return nil, fmt.Errorf("error getting image: %s, %w", imageName, err)
+	}
+
+	return &models.Image{
+		GalleryID: galleryID,
+		Path:      imagePath,
+		FileName:  imageName,
+	}, nil
 }

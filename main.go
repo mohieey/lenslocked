@@ -89,7 +89,8 @@ func main() {
 	}
 	emailService := services.NewEmailService(cfg.SMTP)
 	galleryService := services.GalleryService{
-		DB: db,
+		DB:                  db,
+		SupportedExtensions: []string{".jpeg", ".jpg", ".png", ".gif"},
 	}
 
 	// Setup middlewares
@@ -128,6 +129,7 @@ func main() {
 
 	r.Route("/galleries", func(r chi.Router) {
 		r.Get("/{id}", galleriesController.Show)
+		r.Get("/{id}/images/{filename}", galleriesController.Image)
 		r.Group(func(r chi.Router) {
 			r.Use(umw.RequireUser)
 			r.Get("/", galleriesController.Index)
