@@ -89,8 +89,9 @@ func main() {
 	}
 	emailService := services.NewEmailService(cfg.SMTP)
 	galleryService := services.GalleryService{
-		DB:                  db,
-		SupportedExtensions: []string{".jpeg", ".jpg", ".png", ".gif"},
+		DB:                    db,
+		SupportedExtensions:   []string{".jpeg", ".jpg", ".png", ".gif"},
+		SupportedContentTypes: []string{"image/jpeg", "image/png", "image/gif"},
 	}
 
 	// Setup middlewares
@@ -136,6 +137,7 @@ func main() {
 			r.Post("/", galleriesController.Create)
 			r.Put("/{id}", galleriesController.Update)
 			r.Delete("/{id}", galleriesController.Delete)
+			r.Post("/{id}/images", galleriesController.UploadImage)
 			r.Delete("/{id}/images/{filename}", galleriesController.DeleteImage)
 		})
 

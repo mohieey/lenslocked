@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,9 +17,10 @@ import (
 const DefaultImagesDir = "images"
 
 type GalleryService struct {
-	DB                  *sql.DB
-	ImagesDir           string
-	SupportedExtensions []string
+	DB                    *sql.DB
+	ImagesDir             string
+	SupportedExtensions   []string
+	SupportedContentTypes []string
 }
 
 func (gs *GalleryService) Create(title string, userID int) (*models.Gallery, error) {
@@ -183,6 +186,38 @@ func (gs *GalleryService) Image(galleryID int, imageName string) (*models.Image,
 	}, nil
 }
 
+func (gs *GalleryService) CreateImage(galleryID int, imageName string, contents io.ReadSeeker) error {
+	err := gs.checkContentType(contents, gs.SupportedContentTypes)
+	if err != nil {
+		return err
+	}
+
+	if !gs.hasExtension(imageName, gs.SupportedExtensions) {
+		return errors.New("unsupported extension")
+	}
+
+	galleryDir := gs.galleryDir(galleryID)
+
+	err = os.MkdirAll(galleryDir, 0755)
+	if err != nil {
+		return fmt.Errorf("error creating gallery dir: %w for gallery : %d", err, galleryID)
+	}
+
+	imagePath := filepath.Join(galleryDir, imageName)
+	imageFile, err := os.Create(imagePath)
+	if err != nil {
+		return fmt.Errorf("error creating image file: %w in gallery %d with name %s", err, galleryID, imageName)
+	}
+	defer imageFile.Close()
+
+	_, err = io.Copy(imageFile, contents)
+	if err != nil {
+		return fmt.Errorf("error copying image contents: %w in gallery %d with name %s", err, galleryID, imageName)
+	}
+
+	return nil
+}
+
 func (gs *GalleryService) DeleteImage(galleryID int, imageName string) error {
 	image, err := gs.Image(galleryID, imageName)
 	if err != nil {
@@ -195,4 +230,26 @@ func (gs *GalleryService) DeleteImage(galleryID int, imageName string) error {
 	}
 
 	return nil
+}
+
+func (gs *GalleryService) checkContentType(r io.ReadSeeker, supportedTypes []string) error {
+	testBytes := make([]byte, 512)
+	_, err := r.Read(testBytes)
+	if err != nil {
+		return fmt.Errorf("error reading test bytes: %w", err)
+	}
+
+	_, err = r.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("error seeking to beginning of the file: %w", err)
+	}
+
+	contentType := http.DetectContentType(testBytes)
+	for _, t := range supportedTypes {
+		if t == contentType {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unsupported content type")
 }

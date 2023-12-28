@@ -134,6 +134,45 @@ func (g *Galleries) ServeImage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, image.Path)
 }
 
+func (g *Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.getGalleryById(w, r)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = r.ParseMultipartForm(5 << 20)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	imagesHeaders := r.MultipartForm.File["images"]
+
+	for _, imageHeader := range imagesHeaders {
+		image, err := imageHeader.Open()
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer image.Close()
+
+		err = g.GalleryService.CreateImage(gallery.ID, imageHeader.Filename, image)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("images uploaded successfully"))
+}
+
 func (g *Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	filename := chi.URLParam(r, "filename")
 	gallery, err := g.getGalleryById(w, r)
