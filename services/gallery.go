@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -125,6 +126,11 @@ func (gs *GalleryService) Delete(id int) error {
 	)
 	if err != nil {
 		return fmt.Errorf("error deleting gallery: %w", err)
+	}
+
+	err = os.RemoveAll(gs.galleryDir(id))
+	if err != nil {
+		log.Println(fmt.Errorf("error removing images: %w", err))
 	}
 
 	return nil
