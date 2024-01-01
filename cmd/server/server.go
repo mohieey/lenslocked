@@ -42,6 +42,10 @@ func loadEnvConfig() (*config, error) {
 	config.PSQL.DbName = os.Getenv("PSQL_NAME")
 	config.PSQL.SSLMode = os.Getenv("PSQL_SSLMODE")
 
+	if config.PSQL.Host == "" {
+		config.PSQL = services.DefaultPostgresConfig()
+	}
+
 	config.SMTP.Host = os.Getenv("SMTP_HOST")
 	smtpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {

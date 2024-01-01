@@ -1,3 +1,5 @@
 lenslocked
 .env
+.env.prod
 images/*
+db-data/

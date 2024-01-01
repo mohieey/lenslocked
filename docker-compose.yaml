@@ -1,0 +1,32 @@
+version: "2.33"
+
+services:
+  server:
+    depends_on:
+      - db
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./images:/app/images
+    ports:
+      - "3000:3000"
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  db:
+    image: "postgres"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: ${PSQL_USER}
+      POSTGRES_PASSWORD: ${PSQL_PASSWORD}
+      POSTGRES_DB: ${PSQL_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data/
